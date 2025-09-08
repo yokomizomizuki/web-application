@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta name="viewport" content="width=device-width,initial-scale=1" charset="UTF-8">
+	<link rel="stylesheet" href="../css/common.css">
+	<link rel="stylesheet" href="../css/issues1B.css">
+	<title>B画面</title>
+</head>
+
+<body>
+	<header class="header">
+		<a href="/issues1A.html">
+			<img class="header-icon" src="../img/headerHome.png" alt="home">
+		</a>
+	</header>
+	<main class="input-form">
+		<form id="form">
+			<div class="sub-form">
+				<label for="name">氏名</label>
+				<input type="text" id="name" name="name" autocomplete="username">
+				<button type="button" id="btn-name">入力完了</button>
+			</div>
+			<div class="sub-form">
+				<label for="comment">コメント</label>
+				<textarea id="comment" name="comment" cols="20" rows="2" autocomplete="on"></textarea>
+				<button type="button" id="btn-comment">入力完了</button>
+			</div>
+			<fieldset class="sub-form">
+				<legend>性別</legend>
+				<input type="radio" id="gender_male" name="gender" value="男性">
+				<label for="gender_male">男性</label>
+				<input type="radio" id="gender_female" name="gender" value="女性">
+				<label for="gender_female">女性</label>
+				<button type="button" id="btn-gender" name="gender">選択完了</button>
+			</fieldset>
+			<fieldset class="sub-form">
+				<legend>利用する支払い方法</legend>
+				<input type="checkbox" id="pay_cash" name="payments" value="現金">
+				<label for="pay_cash">現金</label>
+				<input type="checkbox" id="pay_card" name="payments" value="クレジットカード">
+				<label for="pay_card">クレジットカード</label>
+				<input type="checkbox" id="pay_barcode" name="payments" value="バーコード決済">
+				<label for="pay_barcode">バーコード決済</label>
+				<input type="checkbox" id="pay_ic" name="payments" value="交通IC">
+				<label for="pay_ic">交通IC</label>
+				<input type="checkbox" id="pay_other" name="payments" value="その他">
+				<label for="pay_other">その他</label>
+				<button type="button" id="btn-payments" name="payments">選択完了</button>
+			</fieldset>
+			<div class="sub-form">
+				<label for="season">好きな季節</label>
+				<select id="season" name="season">
+					<option value="春">春</option>
+					<option value="夏">夏</option>
+					<option value="秋">秋</option>
+					<option value="冬">冬</option>
+				</select>
+				<button type="button" id="btn-season">選択完了</button>
+			</div>
+		</form>
+		<h4>＜入力内容＞</h4>
+		<div>
+			<p id="input_name"></p>
+			<p id="input_comment"></p>
+			<p id="input_sex"></p>
+			<p id="input_pay"></p>
+			<p id="input_season"></p>
+		</div>
+	</main>
+	<footer class="footer">
+		<a href="/issues1A.html">
+			<img class="footer-icon" src="../img/footerHome.png" alt="home">
+		</a>
+	</footer>
+</body>
+<script src="../js/issues1B.js"></script>
+
+</html>

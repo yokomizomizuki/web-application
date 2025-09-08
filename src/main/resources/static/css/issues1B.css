@@ -1,0 +1,16 @@
+.input-form {
+	padding: 60px;
+}
+
+.sub-form {
+	margin: 10px;
+	display: flex;
+	align-items: flex-end; /* テキストエリアとボタンを下揃えに */
+	gap: 8px; /* 要素間の余白を均等に */
+}
+
+p {
+	white-space: pre; /*改行や半角スペースが入力した分だけそのまま反映*/
+	text-indent: -80.5px;  /*段落の一行目を字下げして入力された文字の開始位置をそろえる*/
+	padding-left: 79px;    /*字下げした幅を余白でカバー*/
+}
