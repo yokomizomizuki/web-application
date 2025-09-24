@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta charset="UTF-8">
+	<title>ユーザーリスト</title>
+</head>
+
+<body>
+	<div class="area">
+		<h1>ユーザーリスト</h1>
+		<form action="/usersubmit" method="post">
+			<div>
+				<label>ユーザー名</label>
+				<input type="text" id="userName" name="userName">
+				<input type="submit" value="登録">
+			</div>
+		</form>
+		<input type="text" id="usersName">
+		<button id="getUsersButton">ユーザーデータ検索</button>
+		<table border="1">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>名前</th>
+				</tr>
+			</thead>
+			<tbody id="usersList">
+			</tbody>
+		</table>
+	</div>
+
+	<div class="area">
+		<h1>スキルデータリスト</h1>
+		<form action="/skillsubmit" method="post">
+			<div>
+				<label>ユーザーID</label>
+				<input type="text" id="userId" name="userId">
+			</div>
+			<div>
+				<label>スキル</label>
+				<input type="text" id="skill" name="skill">
+				<input type="submit" value="登録">
+			</div>
+		</form>
+		<input type="text" id="skillsSkill">
+		<button id="getSkillsButton">スキルデータ検索</button>
+		<table border="1">
+			<thead>
+				<tr>
+					<th>ユーザー名</th>
+					<th>スキル</th>
+				</tr>
+			</thead>
+			<tbody id="skillsList">
+			</tbody>
+		</table>
+	</div>
+
+	<script> //.thenはメソッドチェーンという、=>はアロー関数(ラムダ式)という
+		document.getElementById("getUsersButton").addEventListener("click", () => {
+			const nameValue = document.getElementById("usersName").value;
+			const url = new URL("http://localhost:8080/api/users");
+			url.searchParams.append("usersName", nameValue);
+			fetch(url) //Example.javaのパスにアクセス
+				.then(response => response.json()) //上が成功したらJSONデータに変換
+				.then(userData => {
+					
+					const usersList = document.getElementById("usersList");
+					//上が成功したらJSONに変換されたresponse(dataの変数)に対して処理
+					usersList.innerHTML = '';  // 既存の中身をすべて削除
+
+					// 例: 全データ配列
+					const half = userData.length / 2;
+					const userIds = userData.slice(0, half);
+					const userNames = userData.slice(half);
+
+					// userIds の長さを使って forEach
+					userIds.forEach((userId, index) => {
+						const userName = userNames[index];  // 同じ index の userName を取る
+
+						const tr = document.createElement("tr");
+
+						const tdUserId = document.createElement("td");
+						tdUserId.textContent = userId;
+						tr.appendChild(tdUserId);
+
+						const tdUserName = document.createElement("td");
+						tdUserName.textContent = userName;
+						tr.appendChild(tdUserName);
+
+						// 削除ボタン列
+						const tdAction = document.createElement("td");
+						const btn = document.createElement("button");
+						btn.textContent = "削除";
+						btn.addEventListener("click", () => {
+							if (confirm("本当に削除しますか？")) {
+								fetch(`http://localhost:8080/api/users/${encodeURIComponent(userId)}`, {
+									method: 'DELETE'
+								})
+									.then(resp => {
+										if (resp.ok) {
+											// 再読み込みまたは行を削除
+											tr.remove();
+										} else if (resp.status === 404) {
+											alert("対象のユーザーが見つかりません");
+										} else {
+											alert("削除に失敗しました");
+										}
+									})
+									.catch(err => {
+										console.error("削除エラー:", err);
+									});
+							}
+						});
+						tdAction.appendChild(btn);
+						tr.appendChild(tdAction);
+
+						usersList.appendChild(tr);
+					})
+				})
+				.catch(err => console.error(err));
+		})
+
+		document.getElementById("getSkillsButton").addEventListener("click", () => {
+			const skillValue = document.getElementById("skillsSkill").value;
+			const url = new URL("http://localhost:8080/api/skills");
+			url.searchParams.append("skillsSkill", skillValue);
+			
+			fetch(url) //Example.javaのパスにアクセス
+				.then(response => response.json())//上が成功したらJSONデータに変換
+				.then(skillData => {
+
+					const skillsList = document.getElementById("skillsList");   //上が成功したらJSONに変換されたresponse(dataの変数)に対して処理
+					skillsList.innerHTML = '';  // 既存の中身をすべて削除
+
+					const half = skillData.length / 2;
+					const userNames = skillData.slice(0, half);
+					const userSkills = skillData.slice(half);
+					
+					userNames
+						.forEach((userName, index) => {
+							const userSkill = userSkills[index];  // 同じ index の userName を取る
+							const tr = document.createElement("tr");
+
+							const tdName = document.createElement("td");
+							tdName.textContent = userName;
+							tr.appendChild(tdName);
+
+
+							const tdSkill = document.createElement("td");
+							tdSkill.textContent = userSkill;
+							tr.appendChild(tdSkill);
+
+							const tdAction = document.createElement("td");
+							const btn = document.createElement("button");
+							btn.textContent = "削除";
+							btn.addEventListener("click", () => {
+								if (confirm("本当に削除しますか？")) {
+									fetch(`http://localhost:8080/api/users/${encodeURIComponent(userName)}/skills/${encodeURIComponent(userSkill)}`, {
+										method: 'DELETE'
+									})
+										.then(resp => {
+											
+											if (resp.ok) {
+												// 成功したら行を削除
+												tr.remove();
+											} else if (resp.status === 404) {
+												alert("対象のユーザーが見つかりません");
+											} else {
+												alert("削除に失敗しました");
+											}
+										})
+										.catch(err => {
+											console.error("削除エラー:", err);
+										});
+								}
+							});
+							tdAction.appendChild(btn);
+							tr.appendChild(tdAction);
+
+							skillsList.appendChild(tr);
+						});
+
+				});
+		})
+	</script>
+</body>
+
+</html>
