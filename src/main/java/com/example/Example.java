@@ -95,7 +95,7 @@ public class Example {
 				PreparedStatement stmt = conn.prepareStatement(delete_sql)) {
 			conn.setAutoCommit(false);// autoCommit を無効にする
 			stmt.setInt(1, id);
-			int rows = stmt.executeUpdate(); // DBのデータを変更
+			stmt.executeUpdate(); // DBのデータを変更
 			conn.commit(); // トランザクションを完了させSQL操作を保存
 
 		} catch (SQLException e) {
@@ -115,7 +115,7 @@ public class Example {
 
 			stmt.setString(1, name);
 			stmt.setString(2, skill);
-			int rows = stmt.executeUpdate();
+			stmt.executeUpdate();
 			conn.commit(); // トランザクションを完了させSQL操作を保存
 
 		} catch (SQLException e) {
