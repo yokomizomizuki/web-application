@@ -9,63 +9,94 @@
 <body>
 	<div class="area">
 		<h1>ユーザーリスト</h1>
-		<form action="/usersubmit" method="post">
+		<div>
+			<h4>登録</h4>
+			<label>ユーザー名</label>
+			<input type="text" id="userName" name="userName">
+			<button id="userRegistration">登録</button>
+		</div>
+		<div>
+			<h4>取得</h4>
 			<div>
-				<label>ユーザー名</label>
-				<input type="text" id="userName" name="userName">
-				<input type="submit" value="登録">
+				<input type="radio" name="userMatch" value="0">完全一致
+				<input type="radio" name="userMatch" value="1">部分一致
+				<input type="radio" name="userMatch" value="2" checked /> 全件
 			</div>
-		</form>
-		<input type="text" id="usersName">
-		<button id="getUsersButton">ユーザーデータ検索</button>
-		<table border="1">
-			<thead>
-				<tr>
-					<th>ID</th>
-					<th>名前</th>
-				</tr>
-			</thead>
-			<tbody id="usersList">
-			</tbody>
-		</table>
+			<input type="text" id="usersName" name="userKeyword" placeholder="名前で絞り込み">
+			<button id="getUsersButton">ユーザーデータ検索</button>
+			<table border="1">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>名前</th>
+					</tr>
+				</thead>
+				<tbody id="usersList">
+				</tbody>
+			</table>
+		</div>
 	</div>
 
 	<div class="area">
 		<h1>スキルデータリスト</h1>
-		<form action="/skillsubmit" method="post">
+		<div>
+			<h4>登録</h4>
+			<label>ユーザーID</label>
+			<input type="number" id="userId" name="userId">
+			<label>スキル</label>
+			<input type="text" id="skill" name="skill">
+			<button id="skillRegistration">登録</button>
+		</div>
+		<div>
+			<h4>取得</h4>
 			<div>
-				<label>ユーザーID</label>
-				<input type="text" id="userId" name="userId">
+				<input type="radio" name="skillMatch" value="0">完全一致
+				<input type="radio" name="skillMatch" value="1">部分一致
+				<input type="radio" name="skillMatch" value="2" checked /> 全件
 			</div>
-			<div>
-				<label>スキル</label>
-				<input type="text" id="skill" name="skill">
-				<input type="submit" value="登録">
-			</div>
-		</form>
-		<input type="text" id="skillsSkill">
-		<button id="getSkillsButton">スキルデータ検索</button>
-		<table border="1">
-			<thead>
-				<tr>
-					<th>ユーザー名</th>
-					<th>スキル</th>
-				</tr>
-			</thead>
-			<tbody id="skillsList">
-			</tbody>
-		</table>
+			<select name="sortBy">
+				<option value="sName">name</option>
+				<option value="sSkill">skill</option>
+			</select>
+			<select name="sortOrder">
+				<option value="sAsc">昇順</option>
+				<option value="sDesc">降順</option>
+			</select>
+			<input type="text" id="skillsSkill" name="skillKeyword" placeholder="スキルで絞り込み">
+			<button id="getSkillsButton">スキルデータ検索</button>
+
+			<table border="1">
+				<thead>
+					<tr>
+						<th>ユーザー名</th>
+						<th>スキル</th>
+					</tr>
+				</thead>
+				<tbody id="skillsList">
+				</tbody>
+			</table>
+		</div>
 	</div>
 
 	<script> //.thenはメソッドチェーンという、=>はアロー関数(ラムダ式)という
 		document.getElementById("getUsersButton").addEventListener("click", () => {
-			const nameValue = document.getElementById("usersName").value;
+			const radios = document.getElementsByName("userMatch");
+			let matchValue = null;
+			radios.forEach(r => {
+				if (r.checked) matchValue = r.value;
+			});
+			if (matchValue === null) {
+				// デフォルト値をセットしておく
+				matchValue = "0";
+			}
+			const keyword = document.getElementById("usersName").value || "";
 			const url = new URL("http://localhost:8080/api/users");
-			url.searchParams.append("usersName", nameValue);
+			url.searchParams.append("userMatch", matchValue);
+			url.searchParams.append("userKeyword", keyword);
 			fetch(url) //Example.javaのパスにアクセス
 				.then(response => response.json()) //上が成功したらJSONデータに変換
 				.then(userData => {
-					
+
 					const usersList = document.getElementById("usersList");
 					//上が成功したらJSONに変換されたresponse(dataの変数)に対して処理
 					usersList.innerHTML = '';  // 既存の中身をすべて削除
@@ -98,24 +129,36 @@
 								fetch(`http://localhost:8080/api/users/${encodeURIComponent(userId)}`, {
 									method: 'DELETE'
 								})
-									.then(resp => {
-										if (resp.ok) {
-											// 再読み込みまたは行を削除
+									.then(response => {
+										if (!response.ok) {
+											// ステータスがエラー系なら text を読んでメッセージを投げる
+											return response.text()
+												.then(body => {
+													const msg = body.message || `ステータスエラー: ${response.status}`;
+													throw new Error(msg);
+												});
+										}
+										// ステータス OK の場合、text を返す
+										return response.text();
+									})
+									.then(data => {
+										// 成功したら行を削除
+										if (data != "そのユーザーはスキルテーブルに存在します") {
 											tr.remove();
-										} else if (resp.status === 404) {
-											alert("対象のユーザーが見つかりません");
+											alert("削除が完了しました。");
 										} else {
-											alert("削除に失敗しました");
+											// 処理（削除しない、エラー表示など）
+											alert("スキルデータリストにユーザーのデータが存在するため、削除できません。");
 										}
 									})
+
 									.catch(err => {
-										console.error("削除エラー:", err);
+										alert(err);
 									});
 							}
 						});
 						tdAction.appendChild(btn);
 						tr.appendChild(tdAction);
-
 						usersList.appendChild(tr);
 					})
 				})
@@ -123,10 +166,27 @@
 		})
 
 		document.getElementById("getSkillsButton").addEventListener("click", () => {
-			const skillValue = document.getElementById("skillsSkill").value;
+			const radios = document.getElementsByName("skillMatch");
+			const sortBySelect = document.querySelector('select[name="sortBy"]');
+			const sortBy = sortBySelect ? sortBySelect.value : "sName";
+			const sortOrderSelect = document.querySelector('select[name="sortOrder"]');
+			const sortOrder = sortOrderSelect ? sortOrderSelect.value : "sAsc";
+			let matchValue = null;
+			radios.forEach(r => {
+				if (r.checked) matchValue = r.value;
+			});
+			if (matchValue === null) {
+				// デフォルト値をセットしておく
+				matchValue = "0";
+			}
+
+			const keyword = document.getElementById("skillsSkill").value || "";
 			const url = new URL("http://localhost:8080/api/skills");
-			url.searchParams.append("skillsSkill", skillValue);
-			
+			url.searchParams.append("skillMatch", matchValue);
+			url.searchParams.append("skillKeyword", keyword);
+			url.searchParams.append("sortBy", sortBy);
+			url.searchParams.append("sortOrder", sortOrder);
+
 			fetch(url) //Example.javaのパスにアクセス
 				.then(response => response.json())//上が成功したらJSONデータに変換
 				.then(skillData => {
@@ -137,10 +197,11 @@
 					const half = skillData.length / 2;
 					const userNames = skillData.slice(0, half);
 					const userSkills = skillData.slice(half);
-					
+
 					userNames
 						.forEach((userName, index) => {
-							const userSkill = userSkills[index];  // 同じ index の userName を取る
+							const userSkill = userSkills[index];  // 同じ index の userSkillを取る
+
 							const tr = document.createElement("tr");
 
 							const tdName = document.createElement("td");
@@ -160,29 +221,114 @@
 									fetch(`http://localhost:8080/api/users/${encodeURIComponent(userName)}/skills/${encodeURIComponent(userSkill)}`, {
 										method: 'DELETE'
 									})
-										.then(resp => {
-											
-											if (resp.ok) {
-												// 成功したら行を削除
-												tr.remove();
-											} else if (resp.status === 404) {
-												alert("対象のユーザーが見つかりません");
-											} else {
-												alert("削除に失敗しました");
+										.then(response => {
+											if (!response.ok) {
+												// サーバーからエラーレスポンスが返された場合
+												return response.text()
+													.then(errorMessage => {
+														throw new Error(errorMessage);
+													});
 											}
+											return response.text();
 										})
+										.then(data => {
+											// 成功したら行を削除
+											tr.remove();
+											alert("削除が完了しました。");
+										})
+
 										.catch(err => {
-											console.error("削除エラー:", err);
+											alert(err);
 										});
-								}
+								};
+
 							});
 							tdAction.appendChild(btn);
 							tr.appendChild(tdAction);
 
 							skillsList.appendChild(tr);
+
 						});
 
 				});
+		});
+
+		document.getElementById("userRegistration").addEventListener("click", (e) => {
+			e.preventDefault();
+			const setUserName = document.getElementById("userName").value;
+			
+			if (setUserName== null || setUserName.trim() === "") {
+			    alert("ユーザー名を入力してください");
+			    return false;  // フォーム送信を止める
+			  }
+
+			const userData = new FormData();
+			userData.append("userName", setUserName);
+			fetch(`http://localhost:8080/usersubmit`, {
+				method: 'POST',
+				body: userData
+
+			})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					return response.text();
+				})
+				.then(userData => {
+					if (userData != null) {
+						alert("登録が完了しました。");
+					}
+				})
+				.catch(err => {
+					alert("登録エラー:", err);
+				})
+
+		})
+
+		document.getElementById("skillRegistration").addEventListener("click", (e) => {
+			e.preventDefault();
+			const setUserId = document.getElementById("userId").value;
+			const setSkill = document.getElementById("skill").value;
+			
+			if (setUserId == null || setUserId.trim() === "") {
+			    alert("ユーザーIDを入力してください");
+			    return false;  // フォーム送信を止める
+			  }
+			  if (setSkill == null || setSkill.trim() === "") {
+			    alert("スキルを入力してください");
+			    return false;  // フォーム送信を止める
+			  }
+
+			  // 問題なければ true を返してフォーム送信を続行
+			  return true;
+
+			const skillData = new FormData();
+			skillData.append("userId", setUserId);
+			skillData.append("skill", setSkill);
+
+			fetch(`http://localhost:8080/skillsubmit`, {
+				method: 'POST',
+				body: skillData
+			})
+
+				.then(response => {
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					return response.text();
+				})
+				.then(data => {
+					if (data != "ユーザーIDが存在しません") {
+						alert("登録が完了しました。");
+					} else {
+						alert("ユーザーテーブル内に該当するユーザーIDが存在しません。");
+					}
+				})
+				.catch(err => {
+					alert("登録エラー:", err);
+				})
+
 		})
 	</script>
 </body>
