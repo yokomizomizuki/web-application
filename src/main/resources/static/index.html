@@ -101,59 +101,54 @@
 					//上が成功したらJSONに変換されたresponse(dataの変数)に対して処理
 					usersList.innerHTML = '';  // 既存の中身をすべて削除
 
-					// 例: 全データ配列
-					const half = userData.length / 2;
-					const userIds = userData.slice(0, half);
-					const userNames = userData.slice(half);
-
 					// userIds の長さを使って forEach
-					userIds.forEach((userId, index) => {
-						const userName = userNames[index];  // 同じ index の userName を取る
-
+					userData.forEach(item => {
 						const tr = document.createElement("tr");
 
 						const tdUserId = document.createElement("td");
-						tdUserId.textContent = userId;
+						tdUserId.textContent = item.id;
 						tr.appendChild(tdUserId);
 
 						const tdUserName = document.createElement("td");
-						tdUserName.textContent = userName;
+						tdUserName.textContent = item.name;
 						tr.appendChild(tdUserName);
 
 						// 削除ボタン列
 						const tdAction = document.createElement("td");
 						const btn = document.createElement("button");
+						btn.dataset.id = item.id;
 						btn.textContent = "削除";
 						btn.addEventListener("click", () => {
 							if (confirm("本当に削除しますか？")) {
-								fetch(`http://localhost:8080/api/users/${encodeURIComponent(userId)}`, {
+								fetch(`http://localhost:8080/api/users/${encodeURIComponent(item.id)}`, {
 									method: 'DELETE'
 								})
 									.then(response => {
 										if (!response.ok) {
-											// ステータスがエラー系なら text を読んでメッセージを投げる
-											return response.text()
-												.then(body => {
-													const msg = body.message || `ステータスエラー: ${response.status}`;
-													throw new Error(msg);
+											// ステータスがエラー系なら json を読んでメッセージを投げる
+											return response.json()
+												.then(errorMessage => {
+													if (response.status === 409) {
+														alert("このユーザーはスキルデータがあるため、削除できません。");
+													} else if (response.status === 404) {
+														alert("対象のユーザーが見つかりません。");
+													} else {
+														alert("予期せぬエラーが発生しました: " + response.status);
+													}
 												});
 										}
-										// ステータス OK の場合、text を返す
-										return response.text();
+										// ステータス OK の場合、json を返す
+										return response.json();
 									})
 									.then(data => {
-										// 成功したら行を削除
-										if (data != "そのユーザーはスキルテーブルに存在します") {
+										if (data === 200) {
+											// 成功したら行を削除
 											tr.remove();
 											alert("削除が完了しました。");
-										} else {
-											// 処理（削除しない、エラー表示など）
-											alert("スキルデータリストにユーザーのデータが存在するため、削除できません。");
 										}
 									})
-
 									.catch(err => {
-										alert(err);
+										console.error("削除エラー:", err);
 									});
 							}
 						});
@@ -162,7 +157,6 @@
 						usersList.appendChild(tr);
 					})
 				})
-				.catch(err => console.error(err));
 		})
 
 		document.getElementById("getSkillsButton").addEventListener("click", () => {
@@ -194,61 +188,54 @@
 					const skillsList = document.getElementById("skillsList");   //上が成功したらJSONに変換されたresponse(dataの変数)に対して処理
 					skillsList.innerHTML = '';  // 既存の中身をすべて削除
 
-					const half = skillData.length / 2;
-					const userNames = skillData.slice(0, half);
-					const userSkills = skillData.slice(half);
+					skillData.forEach(item => {
+						const tr = document.createElement("tr");
 
-					userNames
-						.forEach((userName, index) => {
-							const userSkill = userSkills[index];  // 同じ index の userSkillを取る
-
-							const tr = document.createElement("tr");
-
-							const tdName = document.createElement("td");
-							tdName.textContent = userName;
-							tr.appendChild(tdName);
+						const tdName = document.createElement("td");
+						tdName.textContent = item.name;
+						tr.appendChild(tdName);
 
 
-							const tdSkill = document.createElement("td");
-							tdSkill.textContent = userSkill;
-							tr.appendChild(tdSkill);
+						const tdSkill = document.createElement("td");
+						tdSkill.textContent = item.skill;
+						tr.appendChild(tdSkill);
 
-							const tdAction = document.createElement("td");
-							const btn = document.createElement("button");
-							btn.textContent = "削除";
-							btn.addEventListener("click", () => {
-								if (confirm("本当に削除しますか？")) {
-									fetch(`http://localhost:8080/api/users/${encodeURIComponent(userName)}/skills/${encodeURIComponent(userSkill)}`, {
-										method: 'DELETE'
+						const tdAction = document.createElement("td");
+						const btn = document.createElement("button");
+						btn.dataset.id = item.id;
+						btn.textContent = "削除";
+						btn.addEventListener("click", () => {
+							if (confirm("本当に削除しますか？")) {
+								fetch(`http://localhost:8080/api/skills/${encodeURIComponent(item.id)}`, {
+									method: 'DELETE'
+								})
+									.then(response => {
+										if (!response.ok) {
+											// サーバーからエラーレスポンスが返された場合
+											return response.json()
+												.then(errorMessage => {
+													throw new Error(errorMessage);
+												});
+										}
+										return response.json();
 									})
-										.then(response => {
-											if (!response.ok) {
-												// サーバーからエラーレスポンスが返された場合
-												return response.text()
-													.then(errorMessage => {
-														throw new Error(errorMessage);
-													});
-											}
-											return response.text();
-										})
-										.then(data => {
+									.then(data => {
+										if (data === 200) {
 											// 成功したら行を削除
 											tr.remove();
 											alert("削除が完了しました。");
-										})
-
-										.catch(err => {
-											alert(err);
-										});
-								};
-
-							});
-							tdAction.appendChild(btn);
-							tr.appendChild(tdAction);
-
-							skillsList.appendChild(tr);
+										}
+									})
+									.catch(err => {
+										console.error("削除エラー:", err);
+									});
+							};
 
 						});
+						tdAction.appendChild(btn);
+						tr.appendChild(tdAction);
+						skillsList.appendChild(tr);
+					});
 
 				});
 		});
@@ -256,11 +243,11 @@
 		document.getElementById("userRegistration").addEventListener("click", (e) => {
 			e.preventDefault();
 			const setUserName = document.getElementById("userName").value;
-			
-			if (setUserName== null || setUserName.trim() === "") {
-			    alert("ユーザー名を入力してください");
-			    return false;  // フォーム送信を止める
-			  }
+
+			if (setUserName == null || setUserName.trim() === "") {
+				alert("ユーザー名を入力してください");
+				return false;  // フォーム送信を止める
+			}
 
 			const userData = new FormData();
 			userData.append("userName", setUserName);
@@ -273,15 +260,15 @@
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
-					return response.text();
+					return response.json();
 				})
-				.then(userData => {
-					if (userData != null) {
+				.then(data => {
+					if (data === 200) {
 						alert("登録が完了しました。");
 					}
 				})
 				.catch(err => {
-					alert("登録エラー:", err);
+					console.error("登録エラー:", err);
 				})
 
 		})
@@ -290,18 +277,15 @@
 			e.preventDefault();
 			const setUserId = document.getElementById("userId").value;
 			const setSkill = document.getElementById("skill").value;
-			
-			if (setUserId == null || setUserId.trim() === "") {
-			    alert("ユーザーIDを入力してください");
-			    return false;  // フォーム送信を止める
-			  }
-			  if (setSkill == null || setSkill.trim() === "") {
-			    alert("スキルを入力してください");
-			    return false;  // フォーム送信を止める
-			  }
 
-			  // 問題なければ true を返してフォーム送信を続行
-			  return true;
+			if (setUserId == null || setUserId.trim() === "") {
+				alert("ユーザーIDを入力してください");
+				return false;  // フォーム送信を止める
+			}
+			if (setSkill == null || setSkill.trim() === "") {
+				alert("スキルを入力してください");
+				return false;  // フォーム送信を止める
+			}
 
 			const skillData = new FormData();
 			skillData.append("userId", setUserId);
@@ -314,19 +298,24 @@
 
 				.then(response => {
 					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
+						return response.json()
+							.then(errorMessage => {
+								if (response.status === 404) {
+									alert("対象のユーザーIDが存在しません。");
+								} else {
+									alert("予期しないエラーが発生しました。");
+								}
+							});
 					}
-					return response.text();
+					return response.json();
 				})
 				.then(data => {
-					if (data != "ユーザーIDが存在しません") {
+					if (data === 200) {
 						alert("登録が完了しました。");
-					} else {
-						alert("ユーザーテーブル内に該当するユーザーIDが存在しません。");
 					}
 				})
 				.catch(err => {
-					alert("登録エラー:", err);
+					console.error("登録エラー:", err);
 				})
 
 		})
