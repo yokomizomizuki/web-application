@@ -118,46 +118,40 @@
 						const btn = document.createElement("button");
 						btn.dataset.id = item.id;
 						btn.textContent = "削除";
-						btn.addEventListener("click", () => {
-							if (confirm("本当に削除しますか？")) {
-								fetch(`http://localhost:8080/api/users/${encodeURIComponent(item.id)}`, {
-									method: 'DELETE'
-								})
-									.then(response => {
-										if (!response.ok) {
-											// ステータスがエラー系なら json を読んでメッセージを投げる
-											return response.json()
-												.then(errorMessage => {
-													if (response.status === 409) {
-														alert("このユーザーはスキルデータがあるため、削除できません。");
-													} else if (response.status === 404) {
-														alert("対象のユーザーが見つかりません。");
-													} else {
-														alert("予期せぬエラーが発生しました: " + response.status);
-													}
-												});
-										}
-										// ステータス OK の場合、json を返す
-										return response.json();
-									})
-									.then(data => {
-										if (data === 200) {
-											// 成功したら行を削除
-											tr.remove();
-											alert("削除が完了しました。");
-										}
-									})
-									.catch(err => {
-										console.error("削除エラー:", err);
-									});
-							}
-						});
+
 						tdAction.appendChild(btn);
 						tr.appendChild(tdAction);
 						usersList.appendChild(tr);
 					})
 				})
 		})
+
+		document.getElementById("usersList").addEventListener("click", () => {
+			confirm("本当に削除しますか？");
+			const btn = event.target;
+			const userId = btn.dataset.id;
+			const tr = btn.closest("tr");
+			fetch(`http://localhost:8080/api/users/${encodeURIComponent(userId)}`, {
+				method: 'DELETE'
+			})
+				.then(response => response.json())
+				.then(data => {
+					if (data === 200) {
+						// 成功したら行を削除
+						tr.remove();
+						alert("削除が完了しました。");
+					} else if (data === 409) {
+						alert("このユーザーはスキルデータがあるため、削除できません。");
+					} else if (data === 404) {
+						alert("対象のユーザーが見つかりません。");
+					} else {
+						alert("予期せぬエラーが発生しました: " + data);
+					}
+				})
+				.catch(err => {
+					console.error("登録エラー:", err);
+				})
+		});
 
 		document.getElementById("getSkillsButton").addEventListener("click", () => {
 			const radios = document.getElementsByName("skillMatch");
@@ -204,40 +198,35 @@
 						const btn = document.createElement("button");
 						btn.dataset.id = item.id;
 						btn.textContent = "削除";
-						btn.addEventListener("click", () => {
-							if (confirm("本当に削除しますか？")) {
-								fetch(`http://localhost:8080/api/skills/${encodeURIComponent(item.id)}`, {
-									method: 'DELETE'
-								})
-									.then(response => {
-										if (!response.ok) {
-											// サーバーからエラーレスポンスが返された場合
-											return response.json()
-												.then(errorMessage => {
-													throw new Error(errorMessage);
-												});
-										}
-										return response.json();
-									})
-									.then(data => {
-										if (data === 200) {
-											// 成功したら行を削除
-											tr.remove();
-											alert("削除が完了しました。");
-										}
-									})
-									.catch(err => {
-										console.error("削除エラー:", err);
-									});
-							};
 
-						});
 						tdAction.appendChild(btn);
 						tr.appendChild(tdAction);
 						skillsList.appendChild(tr);
 					});
-
 				});
+		});
+
+		document.getElementById("skillsList").addEventListener("click", () => {
+			confirm("本当に削除しますか？");
+			const btn = event.target;
+			const userId = btn.dataset.id;
+			const tr = btn.closest("tr");
+			fetch(`http://localhost:8080/api/skills/${encodeURIComponent(userId)}`, {
+				method: 'DELETE'
+			})
+				.then(response => response.json())
+				.then(data => {
+					if (data === 200) {
+						// 成功したら行を削除
+						tr.remove();
+						alert("削除が完了しました。");
+					} else {
+						alert("予期せぬエラーが発生しました: " + data);
+					}
+				})
+				.catch(err => {
+					console.error("登録エラー:", err);
+				})
 		});
 
 		document.getElementById("userRegistration").addEventListener("click", (e) => {
@@ -270,7 +259,6 @@
 				.catch(err => {
 					console.error("登録エラー:", err);
 				})
-
 		})
 
 		document.getElementById("skillRegistration").addEventListener("click", (e) => {
@@ -317,7 +305,6 @@
 				.catch(err => {
 					console.error("登録エラー:", err);
 				})
-
 		})
 	</script>
 </body>
