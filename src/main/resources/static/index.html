@@ -127,7 +127,9 @@
 		})
 
 		document.getElementById("usersList").addEventListener("click", () => {
-			confirm("本当に削除しますか？");
+			if (!confirm("本当に削除しますか？")) {
+				return
+			}
 			const btn = event.target;
 			const userId = btn.dataset.id;
 			const tr = btn.closest("tr");
@@ -207,7 +209,9 @@
 		});
 
 		document.getElementById("skillsList").addEventListener("click", () => {
-			confirm("本当に削除しますか？");
+			if (!confirm("本当に削除しますか？")) {
+				return
+			}
 			const btn = event.target;
 			const userId = btn.dataset.id;
 			const tr = btn.closest("tr");
