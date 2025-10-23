@@ -15,7 +15,7 @@
 			<input type="text" id="userName" name="userName">
 			<button id="userRegistration">登録</button>
 		</div>
-		<form th:action="@{/users}" method="get">
+		<form th:action="@{/users/searchusers}" method="get">
 			<h4>取得</h4>
 			<div>
 				<input type="radio" name="userMatch" value="0" th:checked="${userMatch == 0}">完全一致
@@ -55,7 +55,7 @@
 			<input type="text" id="skill" name="skill">
 			<button id="skillRegistration">登録</button>
 		</div>
-		<form th:action="@{/users}" method="get">
+		<form th:action="@{/users/searchskill}" method="get">
 			<h4>取得</h4>
 			<div>
 				<input type="radio" name="skillMatch" value="0" th:checked="${skillMatch == 0}">完全一致

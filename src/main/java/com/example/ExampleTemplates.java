@@ -29,43 +29,18 @@ public class ExampleTemplates {
 	String password = "Yokomirpc";
 
 	@GetMapping("/users") // 呼び出されるメソッドを宣言
-	public String users(@RequestParam(name = "userMatch", defaultValue = "2") Integer value, // 引数にModelクラスを記述(Modelからデータを取得)
-			@RequestParam(name = "userKeyword", required = false) String keyword,
-			@RequestParam(name = "skillMatch", defaultValue = "2") Integer skillvalue,
-			@RequestParam(name = "skillKeyword", required = false) String skillkeyword,
-			@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "sortOrder", required = false) String sortOrder, Model model) throws SQLException {
+	public String getData(Model model) throws SQLException { // 引数にModelクラスを記述(Modelからデータを取得)
 
 		List<Users> userList = new ArrayList<>();
 		List<Skills> skillList = new ArrayList<>();
 
 		// 実行SQL
-		StringBuilder sb = new StringBuilder("SELECT * FROM users ");
-
-		boolean useParameter = false;
-		if (keyword != null && !keyword.isEmpty()) {
-			if (value == 0) {
-				sb.append("WHERE name = ? ");
-				useParameter = true;
-			} else if (value == 1) {
-				sb.append("WHERE name LIKE ? ");
-				useParameter = true;
-			}
-		}
-
-		String sql = sb.toString();
+		String sqlu = "SELECT * FROM users";
+		String sqls = "SELECT users.name, skills.skill, skills.id FROM users JOIN skills ON users.id = skills.user_id";
 
 		// リソースを自動的にクローズ
 		try (Connection connection = DriverManager.getConnection(url, username, password); // JDBC: DBアクセスするためのAPI
-				PreparedStatement statement = connection.prepareStatement(sql)) {// preparedStatementメソッドで実行するSQLを設定,戻り値はクラス
-
-			if (useParameter) {
-				if (value == 0) {
-					statement.setString(1, keyword); // 完全一致
-				} else if (value == 1) {
-					statement.setString(1, "%" + keyword + "%"); // 部分一致
-				}
-			}
+				PreparedStatement statement = connection.prepareStatement(sqlu)) {// preparedStatementメソッドで実行するSQLを設定,戻り値はクラス
 
 			try (ResultSet resultSet = statement.executeQuery()) {// 戻り値はResultSetで取得しレコード格納
 				while (resultSet.next()) {
@@ -74,50 +49,11 @@ public class ExampleTemplates {
 					Users user = new Users(id, name);
 
 					userList.add(user);
-
 				}
 			}
-			StringBuilder sbs = new StringBuilder(
-					"SELECT users.name, skills.skill, skills.id FROM users JOIN skills ON users.id = skills.user_id ");
-
-			if (!"sName".equals(sortBy) && !"sSkill".equals(sortBy)) {
-				sortBy = "sName";
-			}
-			if (!"sAsc".equals(sortOrder) && !"sDesc".equals(sortOrder)) {
-				sortOrder = "sAsc";
-			}
-
-			boolean skillParameter = false;
-			if (skillkeyword != null && !skillkeyword.isEmpty()) {
-				if (skillvalue == 0) {
-					sbs.append("WHERE skills.skill = ? ");
-					skillParameter = true;
-				} else if (skillvalue == 1) {
-					sbs.append("WHERE skills.skill LIKE ? ");
-					skillParameter = true;
-				}
-			}
-
-			// ORDER BY 部分を追加
-			String orderColumn;
-			if ("sName".equals(sortBy)) {
-				orderColumn = "users.name";
-			} else { // sSkill
-				orderColumn = "skills.skill";
-			}
-
-			String orderDir = ("sAsc".equals(sortOrder) ? "ASC" : "DESC");
-			sbs.append("ORDER BY ").append(orderColumn).append(" ").append(orderDir);
-			String sqls = sbs.toString();
 
 			try (PreparedStatement stmt = connection.prepareStatement(sqls)) {
-				if (skillParameter) {
-					if (skillvalue == 0) {
-						stmt.setString(1, skillkeyword); // 完全一致
-					} else if (skillvalue == 1) {
-						stmt.setString(1, "%" + skillkeyword + "%"); // 部分一致
-					}
-				}
+
 				try (ResultSet rs = stmt.executeQuery()) {
 					while (rs.next()) {
 						String name = rs.getString("name");
@@ -126,96 +62,142 @@ public class ExampleTemplates {
 						Skills skilln = new Skills(name, skill, id);
 
 						skillList.add(skilln);
-
 					}
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-			model.addAttribute("userMatch", value);
-			model.addAttribute("userKeyword", keyword);
+
 			model.addAttribute("userList", userList); // Modelクラスに値をセット(テンプレートで使用する名前, 渡す値)
-
-			model.addAttribute("skillMatch", skillvalue);
-			model.addAttribute("skillKeyword", skillkeyword);
-			model.addAttribute("sortBy", sortBy);
-			model.addAttribute("sortOrder", sortOrder);
 			model.addAttribute("skillList", skillList);
-
 			return "users"; // /templates/配下の.htmlを除いたファイルの返却
 		}
 	}
 
-//	@GetMapping("/skills") // 呼び出されるメソッドを宣言
-//	public String skills(@RequestParam(name = "skillMatch", defaultValue = "2") Integer value,
-//			@RequestParam(name = "skillKeyword", required = false) String keyword,
-//			@RequestParam(name = "sortBy", required = false) String sortBy,
-//			@RequestParam(name = "sortOrder", required = false) String sortOrder, Model model) throws SQLException {
-//
-//		List<Skills> skillList = new ArrayList<>();
-//
-//		if (!"sName".equals(sortBy) && !"sSkill".equals(sortBy)) {
-//			sortBy = "sName";
-//		}
-//		if (!"sAsc".equals(sortOrder) && !"sDesc".equals(sortOrder)) {
-//			sortOrder = "sAsc";
-//		}
-//
-//		// 実行SQL
-//		StringBuilder sb = new StringBuilder(
-//				"SELECT users.name, skills.skill ,skills.id FROM users JOIN skills ON users.id = skills.user_id ");
-//
-//		boolean useParameter = false;
-//		if (value == 0) {
-//			sb.append("WHERE skills.skill = ? ");
-//			useParameter = true;
-//		} else if (value == 1) {
-//			sb.append("WHERE skills.skill LIKE ? ");
-//			useParameter = true;
-//		}
-//
-//		// ORDER BY 部分を追加
-//		String orderColumn;
-//		if ("sName".equals(sortBy)) {
-//			orderColumn = "users.name";
-//		} else { // sSkill
-//			orderColumn = "skills.skill";
-//		}
-//
-//		String orderDir = ("sAsc".equals(sortOrder) ? "ASC" : "DESC");
-//		sb.append("ORDER BY ").append(orderColumn).append(" ").append(orderDir);
-//
-//		String sql = sb.toString();
-//
-//		// リソースを自動的にクローズ
-//		try (Connection connection = DriverManager.getConnection(url, username, password); // JDBC: DBアクセスするためのAPI
-//				PreparedStatement statement = connection.prepareStatement(sql)) {
-//
-//			if (useParameter) {
-//				if (value == 0) {
-//					statement.setString(1, keyword); // 完全一致
-//				} else if (value == 1) {
-//					statement.setString(1, "%" + keyword + "%"); // 部分一致
-//				}
-//			}
-//
-//			try (ResultSet rs = statement.executeQuery()) {// 戻り値はResultSetで取得しレコード格納
-//				while (rs.next()) { // nextメソッドでレコードを一行ずつ呼び込む
-//					String name = rs.getString("name");
-//					String skill = rs.getString("skill");
-//					BigDecimal id = rs.getBigDecimal("id");
-//					Skills skilln = new Skills(name, skill, id);
-//
-//					skillList.add(skilln);
-//				}
-//			} catch (SQLException e) {
-//				e.printStackTrace();
-//			}
-//			model.addAttribute("skillList", skillList);
-//
-//			return "index2";
-//		}
-//	}
+	@GetMapping("/users/searchusers")
+	public String search_users(@RequestParam(name = "userMatch", required = false) Integer value,
+			@RequestParam(name = "userKeyword", required = false) String keyword, Model model) {
+
+		List<Users> userList = new ArrayList<>();
+
+		// 実行SQL
+		StringBuilder sb = new StringBuilder("SELECT * FROM users ");
+
+		boolean userParameter = false;
+		if (keyword != null && !keyword.isEmpty()) {
+			if (value == 0) {
+				sb.append("WHERE name = ? ");
+				userParameter = true;
+			} else if (value == 1) {
+				sb.append("WHERE name LIKE ? ");
+				userParameter = true;
+			}
+		}
+
+		String sql = sb.toString();
+		try (Connection connection = DriverManager.getConnection(url, username, password); // JDBC: DBアクセスするためのAPI
+				PreparedStatement statement = connection.prepareStatement(sql)) {// preparedStatementメソッドで実行するSQLを設定,戻り値はクラス
+
+			if (userParameter) {
+				if (value == 0) {
+					statement.setString(1, keyword); // 完全一致
+				} else if (value == 1) {
+					statement.setString(1, "%" + keyword + "%"); // 部分一致
+				}
+			}
+			
+			try (ResultSet resultSet = statement.executeQuery()) {// 戻り値はResultSetで取得しレコード格納
+				while (resultSet.next()) {
+					BigDecimal id = resultSet.getBigDecimal("id");
+					String name = resultSet.getString("name");
+					Users user = new Users(id, name);
+
+					userList.add(user);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		model.addAttribute("userMatch", value);
+		model.addAttribute("userKeyword", keyword);
+		model.addAttribute("userList", userList);
+		return "users";
+	}
+
+	@GetMapping("/users/searchskill")
+	public String search_skill(@RequestParam(name = "skillMatch", required = false) Integer value,
+			@RequestParam(name = "skillKeyword", required = false) String keyword,
+			@RequestParam(name = "sortBy", required = false) String sortBy,
+			@RequestParam(name = "sortOrder", required = false) String sortOrder, Model model) {
+
+		List<Skills> skillList = new ArrayList<>();
+
+		StringBuilder sb = new StringBuilder(
+				"SELECT users.name, skills.skill, skills.id FROM users JOIN skills ON users.id = skills.user_id ");
+
+		if (!"sName".equals(sortBy) && !"sSkill".equals(sortBy)) {
+			sortBy = "sName";
+		}
+		if (!"sAsc".equals(sortOrder) && !"sDesc".equals(sortOrder)) {
+			sortOrder = "sAsc";
+		}
+
+		boolean skillParameter = false;
+		if (keyword != null && !keyword.isEmpty()) {
+			if (value == 0) {
+				sb.append("WHERE skills.skill = ? ");
+				skillParameter = true;
+			} else if (value == 1) {
+				sb.append("WHERE skills.skill LIKE ? ");
+				skillParameter = true;
+			}
+		}
+
+		// ORDER BY 部分を追加
+		String orderColumn;
+		if ("sName".equals(sortBy)) {
+			orderColumn = "users.name";
+		} else { // sSkill
+			orderColumn = "skills.skill";
+		}
+
+		String orderDir = ("sAsc".equals(sortOrder) ? "ASC" : "DESC");
+		sb.append("ORDER BY ").append(orderColumn).append(" ").append(orderDir);
+
+		String sql = sb.toString();
+		try (Connection connection = DriverManager.getConnection(url, username, password); // JDBC: DBアクセスするためのAPI
+				PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+			if (skillParameter) {
+				if (value == 0) {
+					stmt.setString(1, keyword); // 完全一致
+				} else if (value == 1) {
+					stmt.setString(1, "%" + keyword + "%"); // 部分一致
+				}
+			}
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					String name = rs.getString("name");
+					String skill = rs.getString("skill");
+					BigDecimal id = rs.getBigDecimal("id");
+					Skills skilln = new Skills(name, skill, id);
+
+					skillList.add(skilln);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		model.addAttribute("skillMatch", value);
+		model.addAttribute("skillKeyword", keyword);
+		model.addAttribute("sortBy", sortBy);
+		model.addAttribute("sortOrder", sortOrder);
+		model.addAttribute("skillList", skillList);
+		return "users";
+	}
 
 	@DeleteMapping("/api/tusers/{id}")
 	public ResponseEntity<Object> user_delete(@PathVariable(name = "id", required = false) Integer id)
