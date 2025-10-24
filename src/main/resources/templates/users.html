@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>ユーザーリスト</title>
+</head>
+
+<body>
+	<div class="area">
+		<h1>ユーザーリスト</h1>
+		<div>
+			<h4>登録</h4>
+			<label>ユーザー名</label>
+			<input type="text" id="userName" name="userName">
+			<button id="userRegistration">登録</button>
+		</div>
+		<form th:action="@{/users/searchusers}" method="get">
+			<h4>取得</h4>
+			<div>
+				<input type="radio" name="userMatch" value="0" th:checked="${userMatch == 0}">完全一致
+				<input type="radio" name="userMatch" value="1" th:checked="${userMatch == 1}">部分一致
+				<input type="radio" name="userMatch" value="2" th:checked="${userMatch == 2}" /> 全件
+			</div>
+			<input type="text" id="usersName" name="userKeyword" placeholder="名前で絞り込み" th:value="${userKeyword}">
+			<button type="submit">検索</button>
+		</form>
+		<div th:if="${#lists.isEmpty(userList)}">データがありません。</div>
+		<table border="1" th:if="${!#lists.isEmpty(userList)}">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>名前</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="user : ${userList}">
+					<td th:text="${user.id}"></td>
+					<td th:text="${user.name}"></td>
+					<td id="usertd" th:attr="data-id=${user.id}">
+						<button class="userdeletebtn">削除</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="area">
+		<h1>スキルデータリスト</h1>
+		<div>
+			<h4>登録</h4>
+			<label>ユーザーID</label>
+			<input type="number" id="userId" name="userId">
+			<label>スキル</label>
+			<input type="text" id="skill" name="skill">
+			<button id="skillRegistration">登録</button>
+		</div>
+		<form th:action="@{/users/searchskill}" method="get">
+			<h4>取得</h4>
+			<div>
+				<input type="radio" name="skillMatch" value="0" th:checked="${skillMatch == 0}">完全一致
+				<input type="radio" name="skillMatch" value="1" th:checked="${skillMatch == 1}">部分一致
+				<input type="radio" name="skillMatch" value="2" th:checked="${skillMatch == 2}" /> 全件
+			</div>
+			<select name="sortBy">
+				<option value="sName" th:selected="${sortBy == 'sName'}">name</option>
+				<option value="sSkill" th:selected="${sortBy == 'sSkill'}">skill</option>
+			</select>
+			<select name="sortOrder">
+				<option value="sAsc" th:selected="${sortOrder == 'sAsc'}">昇順</option>
+				<option value="sDesc" th:selected="${sortOrder == 'sDesc'}">降順</option>
+			</select>
+			<input type="text" id="skillsSkill" name="skillKeyword" placeholder="スキルで絞り込み" th:value="${skillKeyword}">
+			<button type="submit">検索</button>
+		</form>
+		<div th:if="${#lists.isEmpty(skillList)}">データがありません。</div>
+		<table border="1" th:if="${!#lists.isEmpty(skillList)}">
+			<thead>
+				<tr>
+					<th>ユーザー名</th>
+					<th>スキル</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="skilln : ${skillList}">
+					<td><span th:text="${skilln.name}"></span></td>
+					<td><span th:text="${skilln.skill}"></span></td>
+					<td th:attr="data-id=${skilln.id}">
+						<button class="skilldeletebtn">削除</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<script> //.thenはメソッドチェーンという、=>はアロー関数(ラムダ式)という
+		document.querySelectorAll(".userdeletebtn").forEach(btn => {
+			btn.addEventListener("click", (e) => {
+				e.preventDefault();
+				if (!confirm("本当に削除しますか？")) {
+					return
+				}
+				const tbtn = btn.closest('td');
+				const id = tbtn.dataset.id;
+				fetch(`http://localhost:8080/api/users/${id}`, {
+					method: 'DELETE'
+				})
+					.then(response => response.json())
+					.then(data => {
+						if (data === 200) {
+							// 成功したら行を削除
+							const tr = e.target.closest('tr');
+							tr.remove();
+							alert("削除が完了しました。");
+						} else if (data === 409) {
+							alert("このユーザーはスキルデータがあるため、削除できません。");
+						} else if (data === 404) {
+							alert("対象のユーザーが見つかりません。");
+						} else {
+							alert("予期せぬエラーが発生しました: " + data);
+						}
+					})
+					.catch(err => {
+						console.error("削除エラー:", err);
+					})
+
+			});
+		});
+
+		document.querySelectorAll(".skilldeletebtn").forEach(btn => {
+			btn.addEventListener("click", (e) => {
+				e.preventDefault();
+				if (!confirm("本当に削除しますか？")) {
+					return
+				}
+				const tbtn = btn.closest('td');
+				const id = tbtn.dataset.id;
+				fetch(`http://localhost:8080/api/skills/${id}`, {
+					method: 'DELETE'
+				})
+					.then(response => response.json())
+					.then(data => {
+						if (data === 200) {
+							// 成功したら行を削除
+							const tr = e.target.closest('tr');
+							tr.remove();
+							alert("削除が完了しました。");
+						} else {
+							alert("予期せぬエラーが発生しました: " + data);
+						}
+					})
+					.catch(err => {
+						console.error("削除エラー:", err);
+					})
+
+			});
+		});
+
+		document.getElementById("userRegistration").addEventListener("click", (e) => {
+			e.preventDefault();
+			const setUserName = document.getElementById("userName").value;
+
+			if (setUserName == null || setUserName.trim() === "") {
+				alert("ユーザー名を入力してください");
+				return false;  // フォーム送信を止める
+			}
+
+			const userData = new FormData();
+			userData.append("userName", setUserName);
+			fetch(`http://localhost:8080/usersubmit`, {
+				method: 'POST',
+				body: userData
+
+			})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					return response.json();
+				})
+				.then(data => {
+					if (data === 200) {
+						alert("登録が完了しました。");
+					}
+				})
+				.catch(err => {
+					console.error("登録エラー:", err);
+				})
+		})
+
+		document.getElementById("skillRegistration").addEventListener("click", (e) => {
+			e.preventDefault();
+			const setUserId = document.getElementById("userId").value;
+			const setSkill = document.getElementById("skill").value;
+
+			if (setUserId == null || setUserId.trim() === "") {
+				alert("ユーザーIDを入力してください");
+				return false;  // フォーム送信を止める
+			}
+			if (setSkill == null || setSkill.trim() === "") {
+				alert("スキルを入力してください");
+				return false;  // フォーム送信を止める
+			}
+
+			const skillData = new FormData();
+			skillData.append("userId", setUserId);
+			skillData.append("skill", setSkill);
+
+			fetch(`http://localhost:8080/skillsubmit`, {
+				method: 'POST',
+				body: skillData
+			})
+
+				.then(response => {
+					if (!response.ok) {
+						return response.json()
+							.then(errorMessage => {
+								if (response.status === 404) {
+									alert("対象のユーザーIDが存在しません。");
+								} else {
+									alert("予期しないエラーが発生しました。");
+								}
+							});
+					}
+					return response.json();
+				})
+				.then(data => {
+					if (data === 200) {
+						alert("登録が完了しました。");
+					}
+				})
+				.catch(err => {
+					console.error("登録エラー:", err);
+				})
+		})
+	</script>
+</body>
+
+</html>
