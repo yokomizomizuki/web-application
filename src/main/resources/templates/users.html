@@ -102,7 +102,7 @@
 				}
 				const tbtn = btn.closest('td');
 				const id = tbtn.dataset.id;
-				fetch(`http://localhost:8080/api/tusers/${id}`, {
+				fetch(`http://localhost:8080/api/users/${id}`, {
 					method: 'DELETE'
 				})
 					.then(response => response.json())
@@ -135,7 +135,7 @@
 				}
 				const tbtn = btn.closest('td');
 				const id = tbtn.dataset.id;
-				fetch(`http://localhost:8080/api/tskills/${id}`, {
+				fetch(`http://localhost:8080/api/skills/${id}`, {
 					method: 'DELETE'
 				})
 					.then(response => response.json())
@@ -167,7 +167,7 @@
 
 			const userData = new FormData();
 			userData.append("userName", setUserName);
-			fetch(`http://localhost:8080/tusersubmit`, {
+			fetch(`http://localhost:8080/usersubmit`, {
 				method: 'POST',
 				body: userData
 
@@ -206,7 +206,7 @@
 			skillData.append("userId", setUserId);
 			skillData.append("skill", setSkill);
 
-			fetch(`http://localhost:8080/tskillsubmit`, {
+			fetch(`http://localhost:8080/skillsubmit`, {
 				method: 'POST',
 				body: skillData
 			})
